@@ -1,0 +1,218 @@
+tosca_definitions_version: tosca_simple_yaml_1_3
+
+description: Women's Safety Emergency App Service Template with AI-based threat detection, and enhanced RAN slice management.
+
+node_types:
+  App:
+    derived_from: tosca.nodes.SoftwareComponent
+    properties:
+      app_version:
+        type: string
+      safety_features:
+        type: list
+        entry_schema:
+          type: string
+
+  UserDevice:
+    derived_from: tosca.nodes.MobileDevice
+    properties:
+      device_type:
+        type: string
+      os_version:
+        type: string
+
+  BaseStation:
+    derived_from: tosca.nodes.Network.BaseStation
+    properties:
+      coverage_radius:
+        type: float
+        unit: km
+
+  EdgeServer:
+    derived_from: tosca.nodes.Compute
+    properties:
+      processing_power:
+        type: float
+        unit: GFLOPS
+
+  SafetyXApp:
+    derived_from: tosca.nodes.SoftwareComponent
+    properties:
+      api_version:
+        type: string
+      supported_emergency_types:
+        type: list
+        entry_schema:
+          type: string
+      enable_silent_mode:
+        type: boolean
+      predictive_threat_detection:
+        type: boolean
+
+  RANSliceManagement:
+    derived_from: tosca.nodes.SoftwareComponent
+    properties:
+      max_priority_slices:
+        type: integer
+      dynamic_scaling:
+        type: boolean
+
+  SafetyAIModels:
+    derived_from: tosca.nodes.SoftwareComponent
+    properties:
+      model_version:
+        type: string
+      supported_languages:
+        type: list
+        entry_schema:
+          type: string
+      geofencing_enabled:
+        type: boolean
+
+  EmergencyAuthorities:
+    derived_from: tosca.nodes.SoftwareComponent
+    properties:
+      jurisdiction:
+        type: string
+      emergency_services:
+        type: list
+        entry_schema:
+          type: string
+      alert_confirmation:
+        type: string
+
+topology_template:
+  node_templates:
+    app:
+      type: App
+      properties:
+        
+        safety_features: 
+          - voice_activated
+          - location_tracking
+          - fake_call
+          
+          
+      requirements:
+        - host: user_device
+
+    user_device:
+      type: UserDevice
+      properties:
+        device_type: "smartphone"
+        os_version: "latest"
+      requirements:
+        - connection: base_station
+
+    base_station:
+      type: BaseStation
+      properties:
+        coverage_radius: 5.0
+      requirements:
+        - connection: edge_server
+
+    edge_server:
+      type: EdgeServer
+      properties:
+        processing_power: 1000.0
+      requirements:
+        - connection: safety_xapp
+
+    safety_xapp:
+      type: SafetyXApp
+      properties:
+        
+        supported_emergency_types:
+          - physical_threat
+          - medical_emergency
+          - harassment
+          - predictive_threat
+        enable_silent_mode: true
+        predictive_threat_detection: true
+      requirements:
+        - host: edge_server
+        - dependency: safety_ai_models
+
+    ran_slice_management:
+      type: RANSliceManagement
+      properties:
+        max_priority_slices: 10
+        dynamic_scaling: true
+      requirements:
+        - host: edge_server
+
+    safety_ai_models:
+      type: SafetyAIModels
+      properties:
+        model_version: "3.3.0"
+        supported_languages:
+          - English
+          -
+        geofencing_enabled: true
+      requirements:
+        - host: edge_server
+
+    emergency_authorities:
+      type: EmergencyAuthorities
+      properties:
+        jurisdiction: "local"
+        emergency_services:
+          - police
+          - ambulance
+          
+        alert_confirmation: true
+
+  relationships:
+    app_to_device:
+      type: tosca.relationships.ConnectsTo
+      source: app
+      target: user_device
+    device_to_base_station:
+      type: tosca.relationships.ConnectsTo
+      source: user_device
+      target: base_station
+    base_station_to_edge_server:
+      type: tosca.relationships.ConnectsTo
+      source: base_station
+      target: edge_server
+    edge_server_to_safety_xapp:
+      type: tosca.relationships.ConnectsTo
+      source: edge_server
+      target: safety_xapp
+    safety_xapp_to_ai_models:
+      type: tosca.relationships.DependsOn
+      source: safety_xapp
+      target: safety_ai_models
+    safety_xapp_to_ran_slice:
+      type: tosca.relationships.ConnectsTo
+      source: safety_xapp
+      target: ran_slice_management
+    safety_xapp_to_authorities:
+      type: tosca.relationships.ConnectsTo
+      source: safety_xapp
+      target: emergency_authorities
+
+  interfaces:
+    Standard:
+      operations:
+        create:
+          description: Set up the women's safety emergency system
+        delete:
+          description: Tear down the system
+        start:
+          description: Start the emergency response service
+        stop:
+          description: Stop the emergency response service
+        configure_priority_slice:
+          description: Configure high-priority network slice for emergency response
+        
+        validate_emergency:
+          description: Detect and validate emergency situations using AI models and geofencing
+        allocate_emergency_resources:
+          description: Allocate high-priority resources dynamically for emergency response
+        send_location_to_authorities:
+          description: Send real-time location data to relevant emergency authorities
+        confirm_alert_receipt:
+          description: Confirm that emergency authorities have received the alert and responded
+        predictive_threat_alert:
+          description: Detect potential threats using predictive AI algorithms
